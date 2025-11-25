@@ -1,3 +1,6 @@
 [submodule "crisp-game-lib"]
 	path = crisp-game-lib
 	url = https://github.com/TsybulkaM/crisp-game-lib
+[submodule "esp-crisp"]
+	path = esp-crisp
+	url = https://github.com/TsybulkaM/esp-crisp.git
