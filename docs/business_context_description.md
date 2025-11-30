@@ -1,119 +1,127 @@
-### 1. Business Goal (The Vision & Mission)
+# 1. Business Goal (The Vision & Mission)
 
-**Primary Vision:** To establish the world's leading open, decentralized ecosystem for creating and sharing "connected experiences" on low-cost, connected IoT hardware.
+**Primary Vision:** To establish the world's leading open, decentralized ecosystem for **distributing and managing** indie games on low-cost IoT hardware. We are building the "Steam" for the ESP32 era.
 
 **Our Mission:**
 
-1. **Create the Standard:** To develop and open-source — a lightweight, high-performance platform that transforms common IoT devices (like the M5 series) into powerful, _natively-networked_ interactive consoles.
+- **Create the Standard:** To develop an open-source platform that transforms common IoT devices (like the M5 series) into connected consoles. We move beyond simple "offline" sketches to a professional-grade **Connected Lifecycle**: creating, publishing, updating, and tracking.
     
-2. **Lower the Barrier:** To provide a powerful, yet simple, SDK that abstracts away the complexity of real-time networking. A developer should be able to create a secure, real-time multiplayer experience.
+- **Lower the Barrier:** To provide a powerful **ESP-IDF Component** that abstracts away the complexity of secure networking. A developer should focus on gameplay, whilst the framework handles FreeRTOS tasks, TLS, and memory management.
     
-3. **Build the Infrastructure:** To provide a reference implementation for the "Crisp Hub" (the backend), built on accessible, ubiquitous technologies (**Node.js/TypeScript** and/or **Python/Django**) that any developer can deploy, modify, and scale.
+- **Build the Infrastructure:** To provide a reference implementation for the "Crisp Cloud" (the backend), built on high-performance **Go (Golang)** and **Azure Kubernetes Service**, capable of handling millions of devices.
     
-4. **Foster a Community:** To build a global community of "makers," developers, and players who create, share, and evolve thousands of new, experimental forms of gameplay—forms that are impossible in closed ecosystems (like Nintendo's) or on offline-only devices.
-    
-5. **Define Best Practices:** To have our open-source codebase become the go-to standard for how to build secure, low-latency, and scalable IoT infrastructures for real-time human-computer interaction.
+- **Foster a Community:** To create a global social graph where players can compete on leaderboards, unlock achievements, and track their stats via a web portal, bridging the physical device with the digital community.
     
 
-### 2. Market Landscape
+# 2. Market Landscape
 
-We are not competing with the Steam Deck or Nintendo Switch. We are creating an entirely new, developer-first category that leverages the weaknesses of existing markets.
+We are creating a new category: **The Connected Indie Console**. We solve the distribution and engagement problems that plague the current DIY scene.
 
 |**Market**|**Existing Problem**|**The "Crisp" Solution**|
 |---|---|---|
-|**Closed Consoles** (Switch)|A "walled garden." Innovation is throttled by SDK costs, content curation, and a focus on AAA titles.|**Radical Openness.** Anyone can create and publish. No permission needed. The platform is the community.|
-|**Indie Handhelds** (Playdate)|Beautiful but expensive, "boutique" devices. Their focus is often on offline, single-player, retro-style experiences.|**Accessibility & Connection.** "Crisp" runs on affordable, mass-produced hardware (M5). Our core feature is _the network_.|
-|**DIY Platforms** (Arduino/Pi)|High friction. To make a game, you must be an expert hardware engineer, C++ programmer, and network specialist.|**Focus & Simplicity.** "Crisp" is an _interactive platform_, not a general-purpose computer. Our SDK handles the hard parts.|
+|**Closed Consoles** (Switch)|A "walled garden." High barrier to entry, strict curation, no access to hardware internals.|**Radical Openness.** Anyone can upload a `.bin` file. The platform handles the delivery (FOTA). No permission needed.|
+|**Indie Handhelds** (Playdate)|Beautiful but isolated. Experiences are mostly offline. Updating games is often manual or clunky.|**Connected by Default.** "Crisp" devices are always syncing. Updates are pushed over-the-air. Stats are uploaded instantly.|
+|**DIY Platforms** (Arduino/Pi)|High friction. To share a game, you often share source code. Users must compile it themselves.|**Seamless Distribution.** "Crisp" acts as an App Store. Players just download compiled binaries. Developers get aggregated telemetry.|
 
 Our Unique Selling Proposition (USP):
 
-"Crisp" is the "Linux for connected handhelds." It is the platform for the breakthrough ideas that are too "weird" for Nintendo, too "networked" for Playdate, and too "complex" to build from scratch on Arduino.
+"Crisp" is the Infrastructure-as-a-Service for IoT Games. It allows a lone developer to build a game that has the distribution power and social features (leaderboards, cloud saves) of a AAA studio, running on $20 hardware.
 
-### 3. Scope (The Vision for v1.0)
+# 3. Scope (The Vision for v1.0)
 
-**What "Crisp" _Is_ (In Scope):**
+### What "Crisp" Is (In Scope):
 
-- **"Crisp Framework" (The Device):** A lightweight, high-performance **C++ framework** (for the Arduino/ESP-IDF toolchain) that runs on the M5 (and other ESP32s). It manages the game loop, graphics, input, and network connection.
+1. **"Crisp Firmware" (The Device):**
     
-- **"Crisp SDK" (The Tools):**
-    
-    - The **C++ Library** for the device (`crisp::connect()`, `crisp::sync_state()`).
+    - A professional-grade **Native C++ Framework** built directly on **ESP-IDF** (Espressif IoT Development Framework).
         
-    - The **JavaScript/TypeScript Library** for the web client (`new CrispClient()`).
+    - Leverages **FreeRTOS** to efficiently manage the **Single-Player Game Loop** (Core 1) and background **Network Tasks** (Core 0).
         
-- **"Crisp Hub" (The Backend):** An open-source, reference backend server written in **Node.js/TypeScript** (or Python). It uses WebSockets to manage rooms, matchmaking, and real-time state synchronization. It's designed for anyone to self-host.
+    - Handles secure **MQTT Telemetry** (sending scores/usage) and **HTTPS FOTA** (downloading new games) transparently.
+        
+2. **"Crisp Cloud" (The Backend):**
     
-- **The Web Client (Equal Platform):** A web-based "Crisp" player is a _first-class citizen_. A game session can be joined by any combination of physical "Crisp" devices and web browsers.
+    - **Monolithic Go Service:** A high-performance backend written in **Go (Golang)** running on **Azure Kubernetes Service (AKS)**.
+        
+    - **FOTA Engine:** Manages firmware versioning and streams `.bin` files to devices via secure channels.
+        
+    - **Telemetry Ingest:** Subscribes to **MQTT** topics to process game stats in real-time.
+        
+3. **"Crisp Portal" (The Web Interface):**
+    
+    - **For Players:** A social dashboard (HTML/Go Templates) to view profiles, achievement badges, and global leaderboards.
+        
+    - **For Developers:** An Admin Panel to upload new game binaries (`.bin`) and view fleet analytics.
+        
+
+### What "Crisp" Is Not (Out of Scope):
+
+- **Real-Time Multiplayer:** We are not synchronizing player movement tick-by-tick (no UDP game state sync). The focus is on _asynchronous_ competition (High Scores).
+    
+- **Hardware Manufacturer:** We provide the software stack for existing ESP32 devices (M5Stack, Custom Boards).
     
 
-**What "Crisp" _Is Not_ (Out of Scope):**
-    
-- **A Hardware Company:** We do not sell consoles. We create the software that can live inside any compatible hardware.
-    
-- **A Centralized App Store:** We are not a gatekeeper. We create protocols. Anyone can build their own game "browser" or "store" for "Crisp" games.
-    
+# 4. Use Cases (Ecosystem Scenarios)
 
-### 4. Use Cases (Ecosystem Scenarios)
+### Scenario 1: The Developer (DevOps Flow)
 
-**Scenario 1: The Developer**
-
-- **Actor:** A university student with a game idea.
+- **Actor:** An embedded systems student or indie dev.
     
-- **Goal:** To create a novel, 4-player, real-time party game.
+- **Goal:** To publish a "Flappy Bird" clone and update it with a bug fix.
     
 - **How it works:**
     
-    1. She downloads the "Crisp C++ SDK" for her M5Stick.
+    1. She writes the game in C++ using the **Crisp ESP-IDF Component** and builds it using `idf.py build`.
         
-    2. She writes her game logic in C++, using the simple `crisp::sync_state()` function to share player positions.
+    2. She logs into the **Crisp Admin Portal** (hosted on Azure) and uploads the generated `game.bin`.
         
-    3. She clones the "Crisp Hub" (Node.js) template, adds one line of custom logic, and deploys it for free.
+    3. She notices a bug, fixes it, recompiles, and pushes `v2` to the portal via a CI/CD pipeline (GitHub Actions).
         
-    4. She shares her game's source code and the Hub URL. In one weekend, she has created and published a globally-available, cross-platform multiplayer game. _This is the technological breakthrough._
+    4. The system automatically marks `v2` as the latest stable release.
         
 
-**Scenario 2: The Player (The User)**
+### Scenario 2: The Player (The Consumer)
 
-- **Actor:** A group of friends at a party.
+- **Actor:** A gamer with an M5StickC.
     
-- **Goal:** To play a game together.
+- **Goal:** To play a new game and compete with friends.
     
 - **How it works:**
     
-    1. One friend loads the game on their M5 device. The screen shows a Room Code: `WXYZ`.
+    1. He turns on his device. The device boots and checks the **FOTA Service** via HTTPS.
         
-    2. The second friend opens `crisp.play` (a community-run portal) on their phone's web browser and types `WXYZ`.
+    2. The device sees a new game version is available and downloads it automatically to the OTA partition.
         
-    3. The third friend does the same on their laptop.
+    3. He plays the game offline on the bus.
         
-    4. All three (M5 device, phone, laptop) are instantly in the same game session, playing together in real-time.
+    4. When he gets home (Wi-Fi), the device silently pushes his high score via **MQTT** in the background.
+        
+    5. He opens the **Crisp Web Portal** on his phone and sees he is ranked #5 globally.
         
 
-**Scenario 3: The Educator (The Mentor)**
+### Scenario 3: The Data Analyst
 
-- **Actor:** A professor teaching "Networked Systems" or "Game Design."
+- **Actor:** The platform owner.
     
-- **Goal:** To give students a tangible, fun platform for learning complex concepts.
+- **Goal:** To understand player engagement.
     
 - **How it works:**
     
-    1. The professor uses "Crisp" as the core curriculum.
+    1. They open the **Grafana/Admin Dashboard**.
         
-    2. Students write game logic in **C++** (learning about performance, memory, and game loops).
+    2. They see real-time metrics processed by the **Go Backend**: "Daily Active Devices", "Average Session Time", "Crash Reports".
         
-    3. They then modify the **Node.js/TypeScript** backend (learning about asynchronous programming, WebSockets, and database state).
-        
-    4. They graduate having built a _real, functional, cross-platform application_, not just a command-line chat app.
+    3. All data is queried securely from the **PostgreSQL** database running in the Kubernetes cluster.
         
 
-### 5. User Stories
+# 5. User Stories
 
-- **As a** creator, **I want** to write my game in performant **C++** on my device, **so that** I can have fast graphics and responsive controls.
+- **As a Creator,** I want to build my game using **ESP-IDF**, so that I have full control over memory and tasks without the overhead of the Arduino framework.
     
-- **As a** backend developer, **I want** a clear and simple **Node.js/TypeScript** (or Python) reference server, **so that** I can easily self-host and customize the logic for my game.
+- **As a Backend Engineer,** I want a robust **Go (Golang)** application running in **Docker**, so that I can easily deploy it to **Azure Kubernetes Service**.
     
-- **As a** player, **I want** to join a game from my web browser, **so that** I can play with my friends even if I don't own an M5 device.
+- **As a Player,** I want to view my gaming history and stats on a website, so that I can share my achievements with friends.
     
-- **As a** community member, **I want** the entire stack (device framework, backend hub, web client) to be open-source, **so that** I can learn from it, contribute to it, and trust that it will remain free.
+- **As a Hardware Owner,** I want my device to automatically update its firmware, so that I always have the latest content and bug fixes.
     
-- **As a** hardware enthusiast, **I want** to easily port the "Crisp C++ Framework" to a new, custom-built ESP32 device, **so that** I can create and share my own unique console designs.
+- **As a System Admin,** I want to use **Azure Files** and **Postgres**, so that my game data and binary files are persistent and backed up reliably.
