@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device {{.device.ID}} - Crisp Games Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .navbar { background: rgba(255, 255, 255, 0.95) !important; backdrop-filter: blur(10px); box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .main-container { margin-top: 30px; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-controller"></i> Crisp Games Portal</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-list"></i> Devices</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/games"><i class="bi bi-joystick"></i> Games</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <a href="/" class="btn btn-outline-light mb-3"><i class="bi bi-arrow-left"></i> Back</a>
+                <h1 class="text-white fw-bold"><i class="bi bi-cpu-fill"></i> Device {{.device.ID}}</h1>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3"><div class="card text-center"><div class="card-body"><h2 class="text-primary mb-0">{{.device.TotalScores}}</h2><small class="text-muted">Total Score</small></div></div></div>
+            <div class="col-md-3 mb-3"><div class="card text-center"><div class="card-body"><h2 class="text-success mb-0">{{.device.GameCount}}</h2><small class="text-muted">Games Played</small></div></div></div>
+            <div class="col-md-3 mb-3"><div class="card text-center"><div class="card-body"><h2 class="text-info mb-0">{{if .device.FirmwareVer}}{{.device.FirmwareVer}}{{else}}-{{end}}</h2><small class="text-muted">Firmware</small></div></div></div>
+            <div class="col-md-3 mb-3"><div class="card text-center"><div class="card-body"><h6 class="text-warning mb-0">{{if .device.LastSeen}}{{.device.LastSeen.Format "15:04:05"}}{{else}}Never{{end}}</h6><small class="text-muted">Last Seen</small></div></div></div>
+        </div>
+
+        {{if .device.BestScores}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="bi bi-trophy"></i> Best Scores by Game</h5></div>
+                    <div class="card-body">
+                        <div class="row">
+                            {{range $game, $score := .device.BestScores}}
+                            <div class="col-md-4 col-lg-3 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title"><a href="/leaderboard/{{$game}}" class="text-decoration-none">{{$game}}</a></h6>
+                                        <h3 class="text-primary mb-0">{{$score}}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-success text-white"><h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Scores (Last 50)</h5></div>
+                    <div class="card-body">
+                        {{if .device.RecentScores}}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr><th><i class="bi bi-joystick"></i> Game</th><th><i class="bi bi-star"></i> Score</th><th><i class="bi bi-calendar"></i> Date</th></tr>
+                                </thead>
+                                <tbody>
+                                    {{range .device.RecentScores}}
+                                    <tr>
+                                        <td><a href="/leaderboard/{{.GameCode}}" class="text-decoration-none"><strong>{{.GameCode}}</strong></a></td>
+                                        <td><span class="badge bg-primary">{{.Score}}</span></td>
+                                        <td><small>{{.CreatedAt.Format "2006-01-02 15:04:05"}}</small></td>
+                                    </tr>
+                                    {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                        {{else}}
+                        <div class="text-center py-4"><i class="bi bi-inbox display-4 text-muted"></i><p class="text-muted mt-3">No scores yet</p></div>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
