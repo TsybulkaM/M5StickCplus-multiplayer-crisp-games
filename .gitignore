@@ -72,3 +72,7 @@ bin/
 out/
 temp/
 tmp/
+
+# Docker Compose Cache
+emqx_data/
+pgdata/

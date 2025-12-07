@@ -1,0 +1,10 @@
+FROM golang:1.23-alpine as builder
+WORKDIR /app
+COPY . .
+RUN go build -o portal-app ./cmd/portal 
+
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=builder /app/portal-app .
+COPY --from=builder /app/internal/portal/templates ./internal/portal/templates
+CMD ["./portal-app"]
