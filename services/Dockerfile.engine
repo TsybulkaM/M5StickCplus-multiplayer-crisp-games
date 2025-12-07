@@ -1,0 +1,9 @@
+FROM golang:1.23-alpine as builder
+WORKDIR /app
+COPY . .
+RUN go build -o engine-app ./cmd/engine
+
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=builder /app/engine-app .
+CMD ["./engine-app"]
