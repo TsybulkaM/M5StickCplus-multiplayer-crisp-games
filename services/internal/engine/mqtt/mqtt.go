@@ -19,6 +19,8 @@ func StartWorker(db *sql.DB, broker string) {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(broker)
 	opts.SetClientID("engine-worker")
+	opts.SetAutoReconnect(true)
+	opts.SetCleanSession(false)
 
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
@@ -26,10 +28,17 @@ func StartWorker(db *sql.DB, broker string) {
 	}
 
 	log.Println("MQTT worker started")
-    
-	client.Subscribe("devices/+/score", 0, func(client mqtt.Client, msg mqtt.Message) {
+
+	// Shared subscription for load balancing across multiple workers
+	// Format: $share/group_name/topic
+	sharedTopic := "$share/engine-workers/devices/+/score"
+	if token := client.Subscribe(sharedTopic, 1, func(client mqtt.Client, msg mqtt.Message) {
 		handleScoreMessage(db, msg)
-	})
+	}); token.Wait() && token.Error() != nil {
+		log.Fatalf("Failed to subscribe to %s: %v", sharedTopic, token.Error())
+	}
+
+	log.Printf("Subscribed to shared topic: %s", sharedTopic)
 
 	select {} // Keep worker running
 }

@@ -19,6 +19,14 @@ func main() {
 
 	h := handlers.NewHandler(db)
 
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
+	r.GET("/ready", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ready"})
+	})
+
 	r.GET("/", h.ShowDevices)
 	r.GET("/device/:id", h.ShowDeviceDetail)
 	r.GET("/games", h.ShowGames)
