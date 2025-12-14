@@ -1,0 +1,47 @@
+name: Build and Push ENGINE to ACR
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_version:
+        description: 'Image version/tag (e.g. 1.0.0, latest, or specific SHA commit)'
+        required: true
+        default: 'latest'
+      set_as_latest:
+        description: 'Tag this image with “latest” as well?'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Set image tag
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "IMAGE_TAG=${{ github.event.inputs.image_version }}" >> $GITHUB_OUTPUT
+          else
+            echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push Docker image to ACR
+        working-directory: ./services
+        run: |
+          docker build -f Dockerfile.engine \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/engine:${{ steps.vars.outputs.IMAGE_TAG }} \
+            -t ${{ secrets.ACR_NAME }}.azurecr.io/engine:latest .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/engine:${{ steps.vars.outputs.IMAGE_TAG }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/engine:latest

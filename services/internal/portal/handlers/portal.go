@@ -39,7 +39,7 @@ func NewHandler(db *sql.DB) *Handler {
 	return &Handler{db: db}
 }
 
-// Главная страница со списком всех устройств
+
 func (h *Handler) ShowDevices(c *gin.Context) {
 	search := c.Query("search")
 
@@ -109,7 +109,6 @@ func (h *Handler) ShowDeviceDetail(c *gin.Context) {
 		return
 	}
 
-	// Получаем последние 50 результатов
 	rows, err := h.db.Query(`
 		SELECT id, device_id, game_code, score, created_at
 		FROM game_scores
@@ -132,7 +131,6 @@ func (h *Handler) ShowDeviceDetail(c *gin.Context) {
 		}
 	}
 
-	// Получаем лучшие результаты по каждой игре
 	device.BestScores = make(map[string]int)
 	bestRows, err := h.db.Query(`
 		SELECT game_code, MAX(score) as best_score
@@ -161,7 +159,6 @@ func (h *Handler) ShowDeviceDetail(c *gin.Context) {
 	})
 }
 
-// Лидерборд по игре
 func (h *Handler) ShowLeaderboard(c *gin.Context) {
 	gameCode := c.Param("game")
 
@@ -206,7 +203,6 @@ func (h *Handler) ShowLeaderboard(c *gin.Context) {
 	})
 }
 
-// Список всех игр
 func (h *Handler) ShowGames(c *gin.Context) {
 	type GameInfo struct {
 		GameCode   string

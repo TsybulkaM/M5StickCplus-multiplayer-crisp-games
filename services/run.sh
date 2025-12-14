@@ -2,17 +2,17 @@
 
 # Build services
 echo "Building services..."
-go build -o build/engine ./cmd/engine
-go build -o build/portal ./cmd/portal
+go build -o engine ./cmd/engine
+go build -o portal ./cmd/portal
 
 # Run engine in background
 echo "Starting engine on port 8081..."
-PORT=8081 ./build/engine &
+PORT=8081 ./engine &
 ENGINE_PID=$!
 
 # Run portal in background
 echo "Starting portal on port 8080..."
-PORT=8080 ./build/portal &
+PORT=8080 ./portal &
 PORTAL_PID=$!
 
 echo "Services started!"

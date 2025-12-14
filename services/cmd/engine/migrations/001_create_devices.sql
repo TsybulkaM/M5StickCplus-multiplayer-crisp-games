@@ -1,3 +1,4 @@
+-- +goose Up
 -- Create devices table
 CREATE TABLE IF NOT EXISTS devices (
     id VARCHAR(50) PRIMARY KEY,
@@ -8,5 +9,8 @@ CREATE TABLE IF NOT EXISTS devices (
 );
 
 -- Create indexes
-CREATE INDEX idx_devices_user_id ON devices(user_id);
-CREATE INDEX idx_devices_last_seen ON devices(last_seen DESC);
+CREATE INDEX IF NOT EXISTS idx_devices_user_id ON devices(user_id);
+CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON devices(last_seen DESC);
+
+-- +goose Down
+DROP TABLE IF EXISTS devices CASCADE;
