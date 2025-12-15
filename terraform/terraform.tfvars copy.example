@@ -1,0 +1,23 @@
+environment = "dev"
+location    = "polandcentral"
+
+project_name = "m5stick-multiplayer"
+
+postgres_admin_username = "pgadmin"
+postgres_admin_password = "YourStrongPassword123!"
+postgres_sku_name       = "B_Standard_B1ms" 
+postgres_storage_size_gb = 32
+
+# Storage Account
+storage_account_replication = "LRS" # Локально избыточное хранилище для dev
+
+# Container Instances
+container_instances_cpu    = 1
+container_instances_memory = 1.5
+
+# MQTT Broker
+mqtt_broker_image = "emqx/emqx:5.8.3"
+
+allowed_ip_ranges = [
+  "0.0.0.0/0"
+]
