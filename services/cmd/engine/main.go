@@ -41,7 +41,7 @@ func main() {
 	}
 	defer stor.Close()
 
-	fotaHandler, err := fota.NewHandler(db, stor)
+	fotaHandler, err := fota.NewHandler(db, stor, config.AdminAPIToken)
 	if err != nil {
 		log.Fatalf("Failed to create FOTA handler: %v", err)
 	}

@@ -13,6 +13,7 @@ type Config struct {
 	AzureBlobContainer  string
 	StorageType         string
 	LocalStoragePath    string
+	AdminAPIToken       string
 }
 
 func LoadConfig() *Config {
@@ -25,6 +26,7 @@ func LoadConfig() *Config {
 		AzureBlobContainer:  getEnv("AZURE_BLOB_CONTAINER", "firmware"),
 		StorageType:         getEnv("STORAGE_TYPE", ""),
 		LocalStoragePath:    getEnv("LOCAL_STORAGE_PATH", "./firmware_storage"),
+		AdminAPIToken:       getEnv("ADMIN_API_TOKEN", ""),
 	}
 }
 

@@ -165,15 +165,21 @@ echo "=== Step 7: Creating secrets ==="
 DB_NAME="crisp_game"
 DATABASE_URL="postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:5432/$DB_NAME?sslmode=require"
 
+# Generate random API token if not exists
+ADMIN_API_TOKEN=$(openssl rand -hex 32 2>/dev/null || echo "change-this-to-secure-token-$(date +%s)")
+
 kubectl delete secret app-secrets -n crisp-game --ignore-not-found=true
 
 kubectl create secret generic app-secrets -n crisp-game \
   --from-literal=DATABASE_URL="$DATABASE_URL" \
   --from-literal=AZURE_STORAGE_ACCOUNT="$STORAGE_ACCOUNT" \
   --from-literal=AZURE_STORAGE_KEY="$STORAGE_KEY" \
+  --from-literal=ADMIN_API_TOKEN="$ADMIN_API_TOKEN" \
   --from-literal=APPINSIGHTS_INSTRUMENTATIONKEY="$APPINSIGHTS_KEY"
 
 echo "✓ Secrets created"
+echo "✓ Admin API Token: $ADMIN_API_TOKEN"
+echo "  (Save this token for firmware uploads)"
 
 echo ""
 echo "=== Step 8: Deploying services to Kubernetes ==="
