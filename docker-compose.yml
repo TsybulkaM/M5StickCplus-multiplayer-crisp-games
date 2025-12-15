@@ -24,3 +24,35 @@ services:
       - "18083:18083"
     volumes:
       - ./emqx_data:/opt/emqx/data
+  portal:
+    image: crispprojectacrdev.azurecr.io/portal:latest
+    container_name: crisp_portal
+    restart: always
+    environment:
+      - PORT=8080
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://user:password@db:5432/crisp_db?sslmode=disable
+      - MQTT_BROKER=mqtt://mqtt:1883
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - mqtt
+  engine:
+    image: crispprojectacrdev.azurecr.io/engine:latest
+    container_name: crisp_engine
+    restart: always
+    environment:
+      - PORT=8081
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://user:password@db:5432/crisp_db?sslmode=disable
+      - MQTT_BROKER=mqtt://mqtt:1883
+      - STORAGE_TYPE=local
+      - LOCAL_STORAGE_PATH=/app/firmware_storage
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./services/firmware_storage:/app/firmware_storage
+    depends_on:
+      - db
+      - mqtt 
