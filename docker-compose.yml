@@ -49,6 +49,7 @@ services:
       - MQTT_BROKER=mqtt://mqtt:1883
       - STORAGE_TYPE=local
       - LOCAL_STORAGE_PATH=/app/firmware_storage
+      - ADMIN_API_TOKEN=dev-token-12345
     ports:
       - "8081:8081"
     volumes:

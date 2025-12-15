@@ -15,8 +15,9 @@ import (
 )
 
 type Handler struct {
-	db      *sql.DB
-	storage storage.Storage
+	db            *sql.DB
+	storage       storage.Storage
+	adminAPIToken string
 }
 
 type CheckUpdateResponse struct {
@@ -28,10 +29,11 @@ type CheckUpdateResponse struct {
 	Description string `json:"description"`
 }
 
-func NewHandler(db *sql.DB, stor storage.Storage) (*Handler, error) {
+func NewHandler(db *sql.DB, stor storage.Storage, adminAPIToken string) (*Handler, error) {
 	return &Handler{
-		db:      db,
-		storage: stor,
+		db:            db,
+		storage:       stor,
+		adminAPIToken: adminAPIToken,
 	}, nil
 }
 
@@ -108,7 +110,6 @@ func (h *Handler) DownloadBin(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("FOTA download: device=%s, version=%s", deviceID, version)
 
-	// Получаем информацию о прошивке из БД
 	query := `SELECT blob_name, blob_url, file_size, checksum FROM firmwares WHERE version = $1 AND is_active = TRUE`
 
 	var blobName, blobURL string
@@ -128,7 +129,6 @@ func (h *Handler) DownloadBin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Скачиваем из storage
 	ctx := context.Background()
 	reader, err := h.storage.Download(ctx, blobName)
 	if err != nil {
@@ -138,7 +138,6 @@ func (h *Handler) DownloadBin(w http.ResponseWriter, r *http.Request) {
 	}
 	defer reader.Close()
 
-	// Устанавливаем заголовки
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", "attachment; filename=firmware_"+version+".bin")
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", fileSize))
@@ -147,7 +146,6 @@ func (h *Handler) DownloadBin(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Serving firmware %s (%d bytes) to device %s", version, fileSize, deviceID)
 
-	// Отдаём файл
 	_, err = io.Copy(w, reader)
 	if err != nil {
 		log.Printf("Failed to send firmware: %v", err)
@@ -163,7 +161,22 @@ func (h *Handler) UploadBin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Парсим multipart form (максимум 100MB)
+	token := r.Header.Get("X-API-Token")
+	if token == "" {
+		token = r.Header.Get("Authorization")
+		if len(token) > 7 && token[:7] == "Bearer " {
+			token = token[7:]
+		}
+	}
+
+	if h.adminAPIToken == "" {
+		log.Printf("Warning: ADMIN_API_TOKEN not configured, upload endpoint is unprotected!")
+	} else if token != h.adminAPIToken {
+		log.Printf("Unauthorized upload attempt with token: %s", token)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	err := r.ParseMultipartForm(100 << 20)
 	if err != nil {
 		log.Printf("Failed to parse multipart form: %v", err)
@@ -171,7 +184,6 @@ func (h *Handler) UploadBin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Получаем параметры
 	version := r.FormValue("version")
 	description := r.FormValue("description")
 
@@ -180,7 +192,6 @@ func (h *Handler) UploadBin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Получаем файл
 	file, header, err := r.FormFile("firmware")
 	if err != nil {
 		log.Printf("Failed to get firmware file: %v", err)
@@ -191,7 +202,6 @@ func (h *Handler) UploadBin(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Uploading firmware: version=%s, filename=%s, size=%d", version, header.Filename, header.Size)
 
-	// Читаем файл в память и вычисляем MD5
 	hash := md5.New()
 	fileContent, err := io.ReadAll(io.TeeReader(file, hash))
 	if err != nil {
@@ -205,11 +215,9 @@ func (h *Handler) UploadBin(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("File read: size=%d, checksum=%s", fileSize, checksum)
 
-	// Загружаем в storage
 	ctx := context.Background()
 	blobName := fmt.Sprintf("firmware_v%s.bin", version)
 
-	// Create bytes reader
 	reader := bytes.NewReader(fileContent)
 	blobURL, err := h.storage.Upload(ctx, blobName, io.NopCloser(reader), "application/octet-stream")
 	if err != nil {
@@ -220,7 +228,6 @@ func (h *Handler) UploadBin(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Firmware uploaded successfully: %s", blobName)
 
-	// Сохраняем в БД
 	query := `
 		INSERT INTO firmwares (version, blob_name, blob_url, description, file_size, checksum, is_active)
 		VALUES ($1, $2, $3, $4, $5, $6, TRUE)
@@ -243,7 +250,6 @@ func (h *Handler) UploadBin(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Firmware %s uploaded successfully", version)
 
-	// Возвращаем информацию о загруженной прошивке
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{

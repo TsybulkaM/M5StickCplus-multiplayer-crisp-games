@@ -1,0 +1,584 @@
+{
+	"info": {
+		"_postman_id": "64702c89-7f7a-4bf5-8e88-5357a66a1e81",
+		"name": "FOTA API Collection",
+		"description": "Complete API collection for Firmware Over-The-Air (FOTA) updates",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31972725"
+	},
+	"item": [
+		{
+			"name": "Check for Updates",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/fota/check?current_version={{current_version}}&device_id={{device_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"fota",
+						"check"
+					],
+					"query": [
+						{
+							"key": "current_version",
+							"value": "{{current_version}}",
+							"description": "Current firmware version on device"
+						},
+						{
+							"key": "device_id",
+							"value": "{{device_id}}",
+							"description": "Unique device identifier"
+						}
+					]
+				},
+				"description": "Check if a firmware update is available for the device.\n\n**Public endpoint** - No authentication required.\n\nReturns:\n- `update_available` - New version is available\n- `no_update` - Device is up to date"
+			},
+			"response": [
+				{
+					"name": "Update Available",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/fota/check?current_version=1.0.0&device_id=ESP32-001",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fota",
+								"check"
+							],
+							"query": [
+								{
+									"key": "current_version",
+									"value": "1.0.0"
+								},
+								{
+									"key": "device_id",
+									"value": "ESP32-001"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"update_available\",\n    \"version\": \"1.0.1\",\n    \"download_url\": \"/api/fota/download?version=1.0.1\",\n    \"file_size\": 1048576,\n    \"checksum\": \"abc123def456...\",\n    \"description\": \"Bug fixes and improvements\"\n}"
+				},
+				{
+					"name": "No Update",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/fota/check?current_version=1.0.1&device_id=ESP32-001",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fota",
+								"check"
+							],
+							"query": [
+								{
+									"key": "current_version",
+									"value": "1.0.1"
+								},
+								{
+									"key": "device_id",
+									"value": "ESP32-001"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"no_update\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Download Firmware",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/fota/download?version={{firmware_version}}&device_id={{device_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"fota",
+						"download"
+					],
+					"query": [
+						{
+							"key": "version",
+							"value": "{{firmware_version}}",
+							"description": "Firmware version to download"
+						},
+						{
+							"key": "device_id",
+							"value": "{{device_id}}",
+							"description": "Device identifier (for logging)"
+						}
+					]
+				},
+				"description": "Download a specific firmware version binary.\n\n**Public endpoint** - No authentication required.\n\nReturns binary firmware file with headers:\n- `Content-Type: application/octet-stream`\n- `Content-Disposition: attachment; filename=firmware_VERSION.bin`\n- `X-Firmware-Version: VERSION`\n- `X-Firmware-Checksum: MD5_HASH`"
+			},
+			"response": [
+				{
+					"name": "Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/fota/download?version=1.0.1&device_id=ESP32-001",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fota",
+								"download"
+							],
+							"query": [
+								{
+									"key": "version",
+									"value": "1.0.1"
+								},
+								{
+									"key": "device_id",
+									"value": "ESP32-001"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "raw",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/octet-stream"
+						},
+						{
+							"key": "Content-Disposition",
+							"value": "attachment; filename=firmware_1.0.1.bin"
+						},
+						{
+							"key": "X-Firmware-Version",
+							"value": "1.0.1"
+						},
+						{
+							"key": "X-Firmware-Checksum",
+							"value": "abc123def456..."
+						}
+					],
+					"cookie": [],
+					"body": "Binary firmware data..."
+				},
+				{
+					"name": "Not Found",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/fota/download?version=9.9.9&device_id=ESP32-001",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fota",
+								"download"
+							],
+							"query": [
+								{
+									"key": "version",
+									"value": "9.9.9"
+								},
+								{
+									"key": "device_id",
+									"value": "ESP32-001"
+								}
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "plain",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": "Firmware not found"
+				}
+			]
+		},
+		{
+			"name": "Upload Firmware (X-API-Token)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-API-Token",
+						"value": "{{admin_api_token}}",
+						"description": "Admin API token for authentication",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "version",
+							"value": "{{firmware_version}}",
+							"description": "Firmware version (e.g., 1.0.1)",
+							"type": "text"
+						},
+						{
+							"key": "description",
+							"value": "{{firmware_description}}",
+							"description": "Release notes or description (optional)",
+							"type": "text"
+						},
+						{
+							"key": "firmware",
+							"description": "Binary firmware file (.bin)",
+							"type": "file",
+							"src": []
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/api/fota/upload",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"fota",
+						"upload"
+					]
+				},
+				"description": "Upload a new firmware version.\n\n**Protected endpoint** - Requires authentication via `X-API-Token` header.\n\nThe firmware will be:\n1. Uploaded to Azure Blob Storage (or local storage)\n2. Saved to database with metadata\n3. Automatically activated for devices"
+			},
+			"response": [
+				{
+					"name": "Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-Token",
+								"value": "your-token-here",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "version",
+									"value": "1.0.1",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Bug fixes and improvements",
+									"type": "text"
+								},
+								{
+									"key": "firmware",
+									"type": "file",
+									"src": "/path/to/firmware.bin"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/fota/upload",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fota",
+								"upload"
+							]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"success\",\n    \"version\": \"1.0.1\",\n    \"file_size\": 1048576,\n    \"checksum\": \"abc123def456...\",\n    \"description\": \"Bug fixes and improvements\",\n    \"blob_name\": \"firmware_v1.0.1.bin\",\n    \"blob_url\": \"https://storage.azure.com/firmware/firmware_v1.0.1.bin\"\n}"
+				},
+				{
+					"name": "Unauthorized",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-API-Token",
+								"value": "invalid-token",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "version",
+									"value": "1.0.1",
+									"type": "text"
+								},
+								{
+									"key": "firmware",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/fota/upload",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"fota",
+								"upload"
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "plain",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": "Unauthorized"
+				}
+			]
+		},
+		{
+			"name": "Upload Firmware (Bearer Token)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{admin_api_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "version",
+							"value": "{{firmware_version}}",
+							"description": "Firmware version (e.g., 1.0.1)",
+							"type": "text"
+						},
+						{
+							"key": "description",
+							"value": "{{firmware_description}}",
+							"description": "Release notes or description (optional)",
+							"type": "text"
+						},
+						{
+							"key": "firmware",
+							"description": "Binary firmware file (.bin)",
+							"type": "file",
+							"src": []
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/api/fota/upload",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"fota",
+						"upload"
+					]
+				},
+				"description": "Upload a new firmware version using Bearer token authentication.\n\n**Protected endpoint** - Requires authentication via `Authorization: Bearer <token>` header.\n\nAlternative authentication method to X-API-Token."
+			},
+			"response": []
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				},
+				"description": "Check if the engine service is running.\n\nReturns: `OK`"
+			},
+			"response": [
+				{
+					"name": "Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "plain",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": "OK"
+				}
+			]
+		},
+		{
+			"name": "Readiness Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/ready",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"ready"
+					]
+				},
+				"description": "Check if the engine service is ready to accept requests.\n\nReturns: `Ready`"
+			},
+			"response": [
+				{
+					"name": "Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ready",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ready"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "plain",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": "Ready"
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8081",
+			"type": "string",
+			"description": "Base URL for the Engine API"
+		},
+		{
+			"key": "admin_api_token",
+			"value": "dev-token-12345",
+			"type": "string",
+			"description": "Admin API token for protected endpoints"
+		},
+		{
+			"key": "device_id",
+			"value": "ESP32-001",
+			"type": "string",
+			"description": "Device identifier for testing"
+		},
+		{
+			"key": "current_version",
+			"value": "1.0.0",
+			"type": "string",
+			"description": "Current firmware version on device"
+		},
+		{
+			"key": "firmware_version",
+			"value": "1.0.1",
+			"type": "string",
+			"description": "New firmware version to upload/download"
+		},
+		{
+			"key": "firmware_description",
+			"value": "Bug fixes and improvements",
+			"type": "string",
+			"description": "Description of the firmware update"
+		}
+	]
+}
