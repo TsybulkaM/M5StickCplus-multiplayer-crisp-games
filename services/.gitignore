@@ -1,4 +1,18 @@
 
 # Binary
 portal
+portal-app
+
 engine
+engine-app
+
+#FOTA local files
+firmware_storage
+
+# Build files
+build/
+dist/
+*.obj
+*.elf
+*.bin
+*.hex

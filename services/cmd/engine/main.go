@@ -1,17 +1,19 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
 	"embed"
 	"os"
-	
+
 	"github.com/pressly/goose/v3"
 
 	"github.com/TsybulkaM/M5StickCplus-multiplayer-crisp-games/internal/core"
 	"github.com/TsybulkaM/M5StickCplus-multiplayer-crisp-games/internal/engine/fota"
 	"github.com/TsybulkaM/M5StickCplus-multiplayer-crisp-games/internal/engine/mqtt"
+	"github.com/TsybulkaM/M5StickCplus-multiplayer-crisp-games/internal/storage"
 )
 
 //go:embed migrations
@@ -32,7 +34,14 @@ func main() {
 
 	go mqtt.StartWorker(db, config.MQTTBroker)
 
-	fotaHandler, err := fota.NewHandler(db, config.AzureStorageAccount, config.AzureStorageKey, config.AzureBlobContainer)
+	// Initialize storage
+	stor, err := storage.NewStorage(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to initialize storage: %v", err)
+	}
+	defer stor.Close()
+
+	fotaHandler, err := fota.NewHandler(db, stor)
 	if err != nil {
 		log.Fatalf("Failed to create FOTA handler: %v", err)
 	}

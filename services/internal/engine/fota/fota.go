@@ -1,6 +1,7 @@
 package fota
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"database/sql"
@@ -9,17 +10,13 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
+	"github.com/TsybulkaM/M5StickCplus-multiplayer-crisp-games/internal/storage"
 )
 
 type Handler struct {
-	db            *sql.DB
-	blobClient    *azblob.Client
-	containerName string
+	db      *sql.DB
+	storage storage.Storage
 }
 
 type CheckUpdateResponse struct {
@@ -31,31 +28,10 @@ type CheckUpdateResponse struct {
 	Description string `json:"description"`
 }
 
-func NewHandler(db *sql.DB, storageAccount, storageKey, containerName string) (*Handler, error) {
-	// Создаем клиент Azure Blob Storage
-	var blobClient *azblob.Client
-
-	if storageAccount != "" && storageKey != "" {
-		credential, err := azblob.NewSharedKeyCredential(storageAccount, storageKey)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create credential: %w", err)
-		}
-
-		serviceURL := fmt.Sprintf("https://%s.blob.core.windows.net/", storageAccount)
-		blobClient, err = azblob.NewClientWithSharedKeyCredential(serviceURL, credential, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create blob client: %w", err)
-		}
-
-		log.Printf("Azure Blob Storage client initialized: account=%s, container=%s", storageAccount, containerName)
-	} else {
-		log.Println("Azure Storage credentials not provided, using local storage fallback")
-	}
-
+func NewHandler(db *sql.DB, stor storage.Storage) (*Handler, error) {
 	return &Handler{
-		db:            db,
-		blobClient:    blobClient,
-		containerName: containerName,
+		db:      db,
+		storage: stor,
 	}, nil
 }
 
@@ -152,18 +128,15 @@ func (h *Handler) DownloadBin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Скачиваем из Azure Blob Storage
+	// Скачиваем из storage
 	ctx := context.Background()
-	blobClient := h.blobClient.ServiceClient().NewContainerClient(h.containerName).NewBlobClient(blobName)
-
-	// Скачиваем blob
-	downloadResp, err := blobClient.DownloadStream(ctx, nil)
+	reader, err := h.storage.Download(ctx, blobName)
 	if err != nil {
-		log.Printf("Failed to download blob: %v", err)
+		log.Printf("Failed to download firmware: %v", err)
 		http.Error(w, "Failed to download firmware", http.StatusInternalServerError)
 		return
 	}
-	defer downloadResp.Body.Close()
+	defer reader.Close()
 
 	// Устанавливаем заголовки
 	w.Header().Set("Content-Type", "application/octet-stream")
@@ -175,7 +148,7 @@ func (h *Handler) DownloadBin(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Serving firmware %s (%d bytes) to device %s", version, fileSize, deviceID)
 
 	// Отдаём файл
-	_, err = io.Copy(w, downloadResp.Body)
+	_, err = io.Copy(w, reader)
 	if err != nil {
 		log.Printf("Failed to send firmware: %v", err)
 		return
@@ -232,32 +205,20 @@ func (h *Handler) UploadBin(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("File read: size=%d, checksum=%s", fileSize, checksum)
 
-	// Загружаем в Azure Blob Storage
+	// Загружаем в storage
 	ctx := context.Background()
 	blobName := fmt.Sprintf("firmware_v%s.bin", version)
-	blobClient := h.blobClient.ServiceClient().NewContainerClient(h.containerName).NewBlockBlobClient(blobName)
 
-	contentType := "application/octet-stream"
-	_, err = blobClient.UploadBuffer(ctx, fileContent, &azblob.UploadBufferOptions{
-		HTTPHeaders: &blob.HTTPHeaders{
-			BlobContentType: &contentType,
-		},
-	})
+	// Create bytes reader
+	reader := bytes.NewReader(fileContent)
+	blobURL, err := h.storage.Upload(ctx, blobName, io.NopCloser(reader), "application/octet-stream")
 	if err != nil {
-		log.Printf("Failed to upload to Azure Blob Storage: %v", err)
+		log.Printf("Failed to upload firmware: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	// Генерируем SAS URL для скачивания (действителен 10 лет)
-	sasURL, err := h.generateSASURL(blobName, 10*365*24*time.Hour)
-	if err != nil {
-		log.Printf("Failed to generate SAS URL: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf("Blob uploaded successfully: %s", blobName)
+	log.Printf("Firmware uploaded successfully: %s", blobName)
 
 	// Сохраняем в БД
 	query := `
@@ -273,14 +234,14 @@ func (h *Handler) UploadBin(w http.ResponseWriter, r *http.Request) {
 			created_at = NOW()
 	`
 
-	_, err = h.db.Exec(query, version, blobName, sasURL, description, fileSize, checksum)
+	_, err = h.db.Exec(query, version, blobName, blobURL, description, fileSize, checksum)
 	if err != nil {
 		log.Printf("Failed to save firmware info to database: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Firmware %s uploaded successfully to Azure Blob Storage", version)
+	log.Printf("Firmware %s uploaded successfully", version)
 
 	// Возвращаем информацию о загруженной прошивке
 	w.Header().Set("Content-Type", "application/json")
@@ -292,29 +253,6 @@ func (h *Handler) UploadBin(w http.ResponseWriter, r *http.Request) {
 		"checksum":    checksum,
 		"description": description,
 		"blob_name":   blobName,
-		"blob_url":    sasURL,
+		"blob_url":    blobURL,
 	})
-}
-
-func (h *Handler) generateSASURL(blobName string, duration time.Duration) (string, error) {
-	// Получаем blob client
-	containerClient := h.blobClient.ServiceClient().NewContainerClient(h.containerName)
-	blobClient := containerClient.NewBlobClient(blobName)
-
-	// Создаем SAS токен
-	startTime := time.Now().Add(-15 * time.Minute)
-	expiryTime := time.Now().Add(duration)
-
-	sasQueryParams, err := blobClient.GetSASURL(
-		sas.BlobPermissions{Read: true},
-		expiryTime,
-		&blob.GetSASURLOptions{
-			StartTime: &startTime,
-		},
-	)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate SAS URL: %w", err)
-	}
-
-	return sasQueryParams, nil
 }
