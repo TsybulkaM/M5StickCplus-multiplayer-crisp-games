@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: crisp-game
+data:
+  POSTGRES_DB: "crisp_db"
+  MQTT_PORT: "1883"
+  ENGINE_PORT: "8081"
+  PORTAL_PORT: "8080"
+  ENVIRONMENT: "production"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: crisp-game
+type: Opaque
+data:
+  POSTGRES_USER: dXNlcg==
+  POSTGRES_PASSWORD: cGFzc3dvcmQ=
+  AZURE_STORAGE_ACCOUNT: ""
+  AZURE_STORAGE_KEY: ""
+  APPINSIGHTS_INSTRUMENTATIONKEY: ""

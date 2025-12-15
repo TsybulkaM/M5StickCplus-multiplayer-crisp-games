@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crisp-game
+  labels:
+    name: crisp-game
+    project: m5stick-multiplayer

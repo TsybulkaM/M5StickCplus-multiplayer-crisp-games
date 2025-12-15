@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqtt
+  namespace: crisp-game
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 1883
+      targetPort: 1883
+      protocol: TCP
+      name: mqtt
+    - port: 18083
+      targetPort: 18083
+      protocol: TCP
+      name: dashboard
+  selector:
+    app: mqtt
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mqtt-pvc
+  namespace: crisp-game
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: managed-csi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mqtt
+  namespace: crisp-game
+spec:
+  serviceName: mqtt
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mqtt
+  template:
+    metadata:
+      labels:
+        app: mqtt
+    spec:
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ['sh', '-c', 'chown -R 1000:1000 /opt/emqx/data || true']
+          volumeMounts:
+            - name: mqtt-storage
+              mountPath: /opt/emqx/data
+      containers:
+        - name: emqx
+          image: emqx/emqx:5.8.3
+          ports:
+            - containerPort: 1883
+              name: mqtt
+            - containerPort: 18083
+              name: dashboard
+          env:
+            - name: EMQX_ALLOW_ANONYMOUS
+              value: "true"
+            - name: EMQX_NODE_NAME
+              value: "emqx@127.0.0.1"
+          volumeMounts:
+            - name: mqtt-storage
+              mountPath: /opt/emqx/data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            tcpSocket:
+              port: 1883
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 1883
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: mqtt-storage
+          persistentVolumeClaim:
+            claimName: mqtt-pvc
