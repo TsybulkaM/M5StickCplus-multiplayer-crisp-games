@@ -9,7 +9,7 @@ postgres_sku_name       = "B_Standard_B1ms"
 postgres_storage_size_gb = 32
 
 # Storage Account
-storage_account_replication = "LRS" # Локально избыточное хранилище для dev
+storage_account_replication = "LRS"
 
 # Container Instances
 container_instances_cpu    = 1
