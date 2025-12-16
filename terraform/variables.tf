@@ -84,7 +84,7 @@ variable "allowed_ip_ranges" {
 variable "aks_node_count" {
   description = "Initial number of nodes in AKS cluster"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "aks_min_node_count" {
@@ -102,5 +102,5 @@ variable "aks_max_node_count" {
 variable "aks_vm_size" {
   description = "VM size for AKS nodes"
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_B2as_v2"
 }
